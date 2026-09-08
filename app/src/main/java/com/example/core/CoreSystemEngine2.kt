@@ -88,10 +88,8 @@ class CoreSystemEngine2(private val __batchIntervalSec: Long = 5L) {
         if (!__running) return
         val currentBatch = __batchSeq.incrementAndGet()
 
-        // Kirim pesan simpan & sinkronisasi batch
         __listeners.forEach { it.onMessage(SystemMessage.StoreAndSync(expectedEpoch, currentBatch)) }
 
-        // Re-arm AlarmManager HANYA untuk batch berikutnya (tiap 5 detik / 5 menit, BUKAN tiap detik)
         if (!__running) return
         __scheduleNextBatchAlarm(context, __startEpoch + ((currentBatch + 1) * __batchIntervalSec * 1000L))
     }
@@ -110,7 +108,7 @@ class CoreSystemEngine2(private val __batchIntervalSec: Long = 5L) {
 fun main() {
     System.setProperty("java.util.logging.SimpleFormatter.format", "[%1\$tT] [%4\$s] [%3\$s] %5\$s%n")
 
-    val engine = CoreSystemEngine2(5L)
+    val engine = CoreSystemEngine2(1L)
     val service = ForeGroundService2(engine)
     service.onCreate()
 
