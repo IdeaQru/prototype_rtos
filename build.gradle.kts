@@ -24,14 +24,15 @@ dependencies {
 tasks.register<JavaExec>("runCore2") {
     group = "application"
     description = "Runs Core 2 (Kernel Level: AlarmManager + IPC)"
-    mainClass.set("com.example.core2.CoreSystemEngine2Kt")
+    mainClass.set("com.example.core2.CoreSystemEngineKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
 tasks.register<JavaExec>("runCore") {
     group = "application"
     description = "Runs Core 2 (Kernel Level: AlarmManager + IPC)"
-    mainClass.set("com.example.core2.CoreSystemEngine2Kt")
+    mainClass.set("com.example.core2.CoreSystemEngineKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
+
 
