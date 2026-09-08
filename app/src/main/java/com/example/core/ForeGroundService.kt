@@ -61,6 +61,7 @@ class ForeGroundService2(private val __engine: CoreSystemEngine2) : Service(), C
                 __log.warning("BATCH TICK (5s/5m) #${message.seq} | Expected: ${__time(message.epoch)} | Real: ${__time(realEpoch)} | Drift: +${drift}ms")
                 __ioPool.execute {
                     try {
+                        
                         val t1 = System.currentTimeMillis()
                         Thread.sleep(120) // Simulasi tulis ke SQLite
                         __log.info("IO-STORAGE | Selesai dalam ${System.currentTimeMillis() - t1} ms")

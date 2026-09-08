@@ -54,12 +54,8 @@ class CoreSystemEngine2(private val __batchIntervalSec: Long = 5L) {
         __telemetrySeq.set(0L)
         __batchSeq.set(0L)
         __startEpoch = System.currentTimeMillis()
-
-        __log.info("Memulai Core 2 (Fast Telemetry 1x Register + Kernel Batch Alarm)...")
-
-        // 1. DETAK 1 DETIK: Didaftarkan CUKUP 1 KALI di awal (Tanpa Re-Arm tiap detik)
         __fastTelemetryScheduler = Executors.newSingleThreadScheduledExecutor { r ->
-            Thread(r, "Core2-FastClock-Thread").apply { isDaemon = true }
+            Thread(r, "Core-FastClock-Thread").apply { isDaemon = true }
         }.apply {
             scheduleAtFixedRate({
                 if (__running) {
@@ -88,8 +84,10 @@ class CoreSystemEngine2(private val __batchIntervalSec: Long = 5L) {
         if (!__running) return
         val currentBatch = __batchSeq.incrementAndGet()
 
+        // Kirim pesan simpan & sinkronisasi batch
         __listeners.forEach { it.onMessage(SystemMessage.StoreAndSync(expectedEpoch, currentBatch)) }
 
+        // Re-arm AlarmManager HANYA untuk batch berikutnya (tiap 5 detik / 5 menit)
         if (!__running) return
         __scheduleNextBatchAlarm(context, __startEpoch + ((currentBatch + 1) * __batchIntervalSec * 1000L))
     }
