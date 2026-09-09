@@ -23,13 +23,17 @@ open class Context {
 open class Intent(val context: Context? = null, val cls: Class<*>? = null) {
     val extras = HashMap<String, Any>()
 
-    fun putExtra(name: String, value: Long): Intent {
+    fun putExtra(name: String, value: Any): Intent {
         extras[name] = value
         return this
     }
 
     fun getLongExtra(name: String, defaultValue: Long): Long {
         return (extras[name] as? Long) ?: defaultValue
+    }
+
+    fun getStringExtra(name: String): String? {
+        return extras[name] as? String
     }
 }
 

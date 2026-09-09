@@ -21,18 +21,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
-tasks.register<JavaExec>("runCore2") {
+tasks.register<JavaExec>("runCore") {
     group = "application"
-    description = "Runs Core 2 (Kernel Level: AlarmManager + IPC)"
-    mainClass.set("com.example.core2.CoreSystemEngineKt")
+    description = "Runs Core  (Kernel Level: AlarmManager + IPC)"
+    mainClass.set("com.example.core.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
-tasks.register<JavaExec>("runCore") {
-    group = "application"
-    description = "Runs Core 2 (Kernel Level: AlarmManager + IPC)"
-    mainClass.set("com.example.core2.CoreSystemEngineKt")
-    classpath = sourceSets["main"].runtimeClasspath
-}
+
 
 
