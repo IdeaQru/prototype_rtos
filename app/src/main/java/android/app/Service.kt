@@ -17,14 +17,18 @@ open class Service : Context() {
     open fun onBind(intent: Intent?): IBinder? = null
 }
 
-class PendingIntent(val targetEpoch: Long = 0L, val targetReceiverClass: Class<*>? = null) {
+class PendingIntent(
+    val targetEpoch: Long = 0L,
+    val targetReceiverClass: Class<*>? = null,
+    val originalIntent: Intent? = null
+) {
     companion object {
         const val FLAG_UPDATE_CURRENT = 134217728
         const val FLAG_IMMUTABLE = 67108864
         @Suppress("UNUSED_PARAMETER")
         fun getBroadcast(context: Context, requestCode: Int, intent: Intent, flags: Int): PendingIntent {
             val epoch = intent.getLongExtra("target_epoch", 0L)
-            return PendingIntent(epoch, intent.cls)
+            return PendingIntent(epoch, intent.cls, intent)
         }
     }
 }
@@ -51,7 +55,7 @@ class AlarmManager {
         val delayMs = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
         val expectedEpoch = if (operation.targetEpoch != 0L) operation.targetEpoch else triggerAtMillis
         scheduler.schedule({
-            val intent = Intent().apply {
+            val intent = operation.originalIntent ?: Intent().apply {
                 putExtra("target_epoch", expectedEpoch)
             }
             val receiver = try {

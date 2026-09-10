@@ -1,2 +1,3 @@
 @echo off
-call "%~dp0gradlew.bat" runCore
+chcp 65001 >nul
+call "%~dp0gradlew.bat" runCore -q
