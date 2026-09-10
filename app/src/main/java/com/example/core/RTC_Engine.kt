@@ -1,63 +1,79 @@
 package com.example.core
-
 import android.content.Context
 import java.util.concurrent.ConcurrentHashMap
 
-class RTC_Engine {
-
+class RTC_Engine(
+    initialEntry: RTC_Entry? = null
+) {
     companion object {
         @Volatile internal var _activeInstance: RTC_Engine? = null
     }
 
     @Volatile private var __running = false
-    private val __tasks   = ConcurrentHashMap<String, RTC_Task>()
+    private val __entries = ConcurrentHashMap<String, RTC_Entry>()
     private val __actions = ConcurrentHashMap<String, (String) -> Unit>()
+
+    init {
+        if (initialEntry != null) {
+            __storeEntry(initialEntry)
+        }
+    }
 
     // ── PUBLIC API ─────────────────────────────────────────────────────────────
 
     fun register(
-        taskId: String,
+        taskName: String,
         timerSec: Long,
         periodicFlag: Boolean,
-        priority: Int = RTC_Task.autoPriority(timerSec),
+        priority: Int = -1,
         action: ((String) -> Unit)? = null
     ) {
-        val key = taskId.uppercase()
-        __tasks[key] = RTC_Task(
-            taskId = key,
-            timerSec = timerSec,
-            periodicFlag = periodicFlag,
-            priority = priority
-        )
+        val entry = 
+            RTC_Entry(
+                taskName = taskName.uppercase(),
+                timerSec = timerSec,
+                periodicFlag = periodicFlag,
+                priority = priority
+            )
+            __storeEntry(entry,action)
+        
+    }
+
+    private fun __storeEntry(entry: RTC_Entry, action: ((String) -> Unit)? = null) {
+        val key = entry.taskName.uppercase()
+        __entries[key] = entry
         if (action != null) __actions[key] = action
     }
-    
+
     fun start(context: Context? = null) {
         __running = true
         _activeInstance = this
         val now = System.currentTimeMillis()
-        __tasks.values.forEach { task ->
-            task.nextRunEpoch = now + (task.timerSec * 1000L)
-            task.status       = RTC_Task.STATUS_WAITING
-            if (context != null && !task.periodicFlag) {
-                RTC_AlarmReceiver.schedule(context, task.taskId, task.nextRunEpoch)
-            }
+        // Tidak ada manipulasi status di sini, serahkan ke entry:
+        __entries.values.forEach { entry ->
+            entry.activate(now)
         }
+    }
+
+    fun stop() {
+        __running = false
+        if (_activeInstance == this) _activeInstance = null
     }
 
     fun poll(): List<String> {
         if (!__running) return emptyList()
         val now = System.currentTimeMillis()
-        return __tasks.values
-            .filter { it.periodicFlag && now >= it.nextRunEpoch }
+        // Entry yang memutuskan apakah saatnya jalan, dan execute() yang mengubah statusnya:
+        return __entries.values
+            .filter { it.shouldRun(now) }
             .sortedBy { it.priority }
-            .onEach { it.execute(__actions[it.taskId]) }
-            .map { it.taskId }
+            .onEach { it.execute(__actions[it.taskName]) }
+            .map { it.taskName }
     }
 
     fun wait(maxWaitMs: Long? = null): List<String> {
         if (!__running) return emptyList()
-        val nonPeriodic = __tasks.values.filter { !it.periodicFlag && it.status != RTC_Task.STATUS_DONE }
+        val nonPeriodic = __entries.values.filter { it.isWaitingOneShot() }
         if (nonPeriodic.isEmpty()) return emptyList()
 
         val sleepMs = (nonPeriodic.minOf { it.nextRunEpoch } - System.currentTimeMillis()).coerceAtLeast(0L)
@@ -68,31 +84,9 @@ class RTC_Engine {
         return nonPeriodic
             .filter { now >= it.nextRunEpoch }
             .sortedBy { it.priority }
-            .onEach { it.execute(__actions[it.taskId]) }
-            .map { it.taskId }
+            .onEach { it.execute(__actions[it.taskName]) }
+            .map { it.taskName }
     }
 
-    fun dump(): String = RTC_Task.dumpTable(__tasks.values)
-
-    fun stop() {
-        __running = false
-        if (_activeInstance == this) _activeInstance = null
-    }
-
-    fun triggerAlarm(taskId: String) {
-        _handleAlarmTick(null, taskId)
-    }
-
-    // ── KERNEL ALARM DELEGATE ──────────────────────────────────────────────────
-    internal fun _handleAlarmTick(context: Context?, taskId: String) {
-        if (!__running) return
-        val task = __tasks[taskId.uppercase()] ?: return
-        task.nextRunEpoch = System.currentTimeMillis() + (task.timerSec * 1000L)
-        task.execute(__actions[task.taskId])
-        if (context != null) {
-            RTC_AlarmReceiver.schedule(context, task.taskId, task.nextRunEpoch)
-        }
-    }
+    fun dump(): String = RTC_Entry.dumpTable(__entries.values)
 }
-
-

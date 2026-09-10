@@ -1,33 +1,21 @@
 plugins {
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.0.21"
     application
 }
 
-repositories {
-    mavenCentral()
-}
+kotlin { jvmToolchain(21) }
 
-application {
-    mainClass.set("com.example.ais.CoreSystemEngineKt")
-}
+repositories { mavenCentral() }
 
-sourceSets {
-    named("main") {
-        kotlin.srcDirs("app/src/main/java")
-    }
-}
+application { mainClass.set("com.example.ais.CoreSystemEngineKt") }
 
-dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-}
+sourceSets { named("main") { kotlin.srcDirs("app/src/main/java") } }
+
+dependencies { implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1") }
 
 tasks.register<JavaExec>("runCore") {
     group = "application"
-    description = "Runs Core  (Kernel Level: AlarmManager + IPC)"
+    description = "Runs Core "
     mainClass.set("com.example.core.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
-
-
-
-
