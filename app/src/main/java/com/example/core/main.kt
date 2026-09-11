@@ -13,16 +13,11 @@ fun ut1() {
     val aisCollector = NAV_AisCollector()
 
 
-    // 1. Task TXT: Memproses teks pesan berkala
+    // 1. Task TXT: Memproses AIS DATA
     rtc.register(taskName = "TXT_TASK", timerSec = 1L, periodicFlag = true) { taskName ->
         seq++
         val data = aisCollector.collect(seq)
         Log.d("UT1", "[$taskName] Memproses ${data.formatDisplay()}")
-    }
-
-    // 2. Task LOG: Mencatat status log berkala
-    rtc.register(taskName = "LOG_TASK", timerSec = 2L, periodicFlag = true) { taskName ->
-        Log.d("UT1", "[$taskName] Menulis log sistem ke catatan teks...")
     }
 
     // Start Scheduler
